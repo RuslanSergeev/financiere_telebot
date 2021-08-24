@@ -43,6 +43,41 @@ class Logic:
         reply = '\n'.join(expenses)
         return reply
 
+    def get_expenses_stats(self, update: Update) -> bool:
+        ''' compute how much family members spent
+        on duties this month and who originally should 
+        pay for it. As well as how much left to pay.
+        '''
+        today_date = time.strftime('%d.%m.%Y')
+        status, frames = self.database.get_duty_entries(today_date)
+        frames['currency'] = frames['currency'].apply(
+            self.pay_calc.convert_currency_name
+        )
+        converter = partial(
+            self.pay_calc.convert_currency,
+            self.currency
+        )
+        #conver everything to default currency
+        frames = frames.apply(converter, axis=1)
+        frames = frames.groupby('purpose').sum()
+
+        # duties accordint the initial plan
+        expenses = pd.DataFrame(self.pay_calc.config['expenses'])
+        expenses = expenses[['purpose', 'amount', 'currency']]
+        expenses = expenses.apply(converter, axis=1)
+        expenses = expenses.groupby('purpose').sum()
+
+        #substract frame amounts from incomes
+        for purp in expenses.index.tolist():
+            if purp in frames.index:
+                expenses.loc[purp, 'amount'] += frames.loc[purp, 'amount']
+
+        #export to debt png
+        if len(expenses) > 0:
+            dfi.export(expenses, 'expenses_stats.png')
+
+        return status
+
     def get_month_stats(self, update: Update) -> bool:
         reply = 'month stats'
         return reply
@@ -111,9 +146,10 @@ class Logic:
         frames = frames.apply(converter, axis=1)
         frames = frames.groupby('role').sum()
         incomes = self.pay_calc.get_incomes()
+        pocket_money = self.pay_calc.get_pocket_money()
         #substract frame amounts from incomes
         for role in frames.index:
-            frames.loc[role, 'amount'] += incomes[role]
+            frames.loc[role, 'amount'] += incomes[role] - pocket_money[role]
 
         #export to debt png
         if len(frames) > 0:

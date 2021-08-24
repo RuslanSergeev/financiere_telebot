@@ -62,6 +62,20 @@ def expenses_command(update: Update, context: CallbackContext) -> None:
         noreply.delete()
         update.message.delete()
 
+def left_command(update: Update, context: CallbackContext) -> None:
+    '''Show what is left to pay this month form a png image'''
+    if auth.ok(update):
+        left_ok = logic.get_expenses_stats(update)
+        if left_ok:
+            noreply = context.bot.send_photo(
+                chat_id = update.message.chat_id,
+                photo = open('expenses_stats.png', 'rb')
+            )
+        time.sleep(10)
+        noreply.delete()
+        update.message.delete()
+
+
 def month_command(update: Update, context: CallbackContext) -> None:
     if auth.ok(update):
         month_stats_reply = logic.get_month_stats(update)
@@ -135,6 +149,7 @@ def help_command(update: Update, context: CallbackContext) -> None:
         noreply = update.message.reply_markdown_v2(
             f'`help` \- show this message and exit\n'
             f'`expenses` \- show available expenses categories\n'
+            f'`left` \- show how much is left to pay for each category\n'
             f'`pocket` \- show pocket money summary\n'
             f'`groceries` \- show month groceries statistics\n'
             f'`target` \- show targets debt summary\n'
@@ -165,6 +180,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("start", start_command))
     dispatcher.add_handler(CommandHandler("help", help_command))
     dispatcher.add_handler(CommandHandler("expenses", expenses_command))
+    dispatcher.add_handler(CommandHandler("left", left_command))
     dispatcher.add_handler(CommandHandler("pocket", pocket_command))
     dispatcher.add_handler(CommandHandler("groceries", groceries_command))
     dispatcher.add_handler(CommandHandler("target", target_command))

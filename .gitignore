@@ -1,5 +1,5 @@
 budget.json
-debt_summary.png
+*.png
 grossbook.csv
 telegram.json
 __pycache__/

@@ -45,7 +45,9 @@ class Database:
 
     def get_duty_entries(self, date):
         '''Everythng without pocket_money and targets is a duty
-           Show how much everyone spent on duties.
+           Show how much everyone spent on duties. 
+           Later on we could substract this from the salary to 
+           compute the member debt.
         '''
         frames = self.get_month_entries(date)
         nodept_categories = ['pocket_money', 'targets']
